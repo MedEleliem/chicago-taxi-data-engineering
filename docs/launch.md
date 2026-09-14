@@ -15,10 +15,10 @@ variables S3 configurees publient dans le stockage objet.
 python -m pip install -r requirements-pipeline.txt -r requirements-app.txt
 ```
 
-Il faut aussi Java pour Spark. Sous Windows, le helper Hadoop deja disponible
-dans `.hadoop/bin` est utilise par le projet. Si pip indique qu'aucune version
-n'est disponible, verifier si PIP_NO_INDEX est active dans l'environnement ;
-ce n'est pas necessairement une absence du package sur PyPI.
+Il faut aussi Java pour Spark. Le parcours recommande reste Docker/Linux, qui
+installe la version Java attendue dans l'image Airflow. Si pip indique qu'aucune
+version n'est disponible en execution locale, verifier si PIP_NO_INDEX est
+active dans l'environnement.
 
 ## 2. Jobs standalone, dans cet ordre
 

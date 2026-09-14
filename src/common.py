@@ -44,10 +44,6 @@ def partition_path(root, processing_date):
 
 def create_spark(name):
     os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
-    hadoop = Path(__file__).resolve().parents[1] / ".hadoop"
-    if (hadoop / "bin/winutils.exe").exists():
-        os.environ["HADOOP_HOME"] = str(hadoop)
-        os.environ["PATH"] = str(hadoop / "bin") + os.pathsep + os.environ.get("PATH", "")
     master = os.getenv("SPARK_MASTER", "local[1]" if os.name == "nt" else "local[*]")
     return (SparkSession.builder.master(master).appName(name)
             .config("spark.sql.session.timeZone", "UTC")

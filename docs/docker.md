@@ -45,8 +45,8 @@ PostgreSQL n'est pas expose sur la machine hote.
 
 ## Declencher le vrai pipeline
 
-Dans Airflow, ouvrir chicago_taxi_batch_pipeline, puis Trigger et choisir
-processing_date. La date de demonstration reelle par defaut est 2023-06-01.
+Dans Airflow, ouvrir `chicago_taxi_batch_pipeline`, puis Trigger et choisir
+`processing_date`. La date de demonstration reelle par defaut est 2023-06-01.
 Ou, avec cette date par defaut :
 
 ```powershell
@@ -55,13 +55,18 @@ docker compose logs -f airflow
 ```
 
 Pour choisir une autre date, utiliser le formulaire Airflow (cela evite les
-differences de guillemets JSON entre PowerShell et Bash). Le DAG n'a pas de
-planification automatique : un lot ne demarre pas sans declenchement.
+differences de guillemets JSON entre PowerShell et Bash).
+
+Pour plusieurs jours, declencher `chicago_taxi_range_pipeline` avec
+`start_date` et `end_date`. Le controleur cree un run journalier par date,
+bornes incluses. Les DAGs n'ont pas de planification automatique : un lot ne
+demarre pas sans declenchement.
 
 Jobs manuels dans l'environnement provisionne, sans orchestration :
 
 ```powershell
 docker compose exec airflow python -m scripts.run_pipeline --processing-date 2023-06-01
+docker compose exec airflow python -m scripts.run_date_range --start-date 2023-06-01 --end-date 2023-06-07
 docker compose exec airflow python -m scripts.run_stage --layer bronze --processing-date 2023-06-01
 docker compose exec airflow python -m scripts.run_stage --layer silver --processing-date 2023-06-01
 docker compose exec airflow python -m scripts.run_stage --layer gold --processing-date 2023-06-01

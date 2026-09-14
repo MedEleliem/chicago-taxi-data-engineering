@@ -1,9 +1,0 @@
-.env*
-.git/
-.hadoop/
-__pycache__/
-*.pyc
-data/
-docs/reports/
-graphify-out/
-.pytest_cache/

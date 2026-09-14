@@ -3,9 +3,8 @@
 ## Perimetre
 
 La reference initiale est `notebooks/pandas_only_draft.executed.ipynb`. La
-livraison executable est isolee dans `chicago_taxi_app` et ne depend ni du
-notebook ni de Graphify. Le graphe Graphify global reste un outil de lecture de
-l'architecture du projet d'origine.
+livraison executable ne depend pas du notebook : il documente le premier
+prototype Pandas dont les regles ont ensuite ete migrees vers PySpark.
 
 ## Correspondance avec le test
 
@@ -18,8 +17,8 @@ l'architecture du projet d'origine.
 4. **Gold** : huit tables Parquet, controles de reconciliation et KPI.
 5. **Stockage objet** : snapshots S3 immuables par `run_id`, inventaires SHA-256
    et pointeur `latest.json` publie conditionnellement.
-6. **Orchestration** : un DAG Airflow de huit taches. Le DAG orchestre les
-   commandes; les transformations restent dans `src`.
+6. **Orchestration** : un DAG journalier et un DAG de plage. Airflow orchestre
+   les commandes; les transformations restent dans `src`.
 7. **Restitution** : API FastAPI et application HTML/CSS/JavaScript avec Plotly,
    MapLibre et fond CARTO configure hors du code source.
 8. **Execution** : SeaweedFS S3, PostgreSQL, Airflow et API demarrent avec
@@ -82,6 +81,13 @@ Avec plus de temps : lecture Spark S3A directe, format transactionnel, retention
 automatisee, verrous entre executions concurrentes, extraction SODA en flux,
 moteur SQL analytique, CI et gestion centralisee des secrets.
 
+## Extension de plage
+
+Le DAG `chicago_taxi_range_pipeline` utilise Dynamic Task Mapping pour
+declencher une execution journaliere par date entre `start_date` et
+`end_date`, bornes incluses. La generation de dates est couverte par trois
+tests cibles. Aucun benchmark de volume trimestriel n'a ete execute.
+
 ## Parcours de lecture
 
 1. `docs/architecture.md`
@@ -89,7 +95,5 @@ moteur SQL analytique, CI et gestion centralisee des secrets.
 3. `docs/storage.md` et `docs/dataops.md`
 4. `docs/airflow.md` et `docs/docker.md`
 5. `docs/api.md` et `docs/frontend.md`
-6. `docs/reports/code_complet.md`
 
-Les fichiers executables restent la reference. `code_complet.md` est une annexe
-regeneree par `python -m scripts.export_code_report` sans inclure de secret.
+Les fichiers executables restent la reference.

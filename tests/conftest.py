@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 
 import pytest
 from pyspark.sql import SparkSession
@@ -12,11 +11,6 @@ from pyspark.sql import functions as F
 @pytest.fixture(scope="session")
 def spark() -> SparkSession:
     os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
-    hadoop_home = Path(__file__).resolve().parents[1] / ".hadoop"
-    if (hadoop_home / "bin" / "winutils.exe").exists():
-        os.environ["HADOOP_HOME"] = str(hadoop_home)
-        os.environ["PATH"] = f"{hadoop_home / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}"
-
     session = (
         SparkSession.builder.master("local[1]")
         .appName("chicago-taxi-tests")
