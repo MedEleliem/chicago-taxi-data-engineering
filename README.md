@@ -10,6 +10,54 @@ et du HTML/CSS/JavaScript simple pour le dashboard.
 
 ![Vue principale du dashboard](docs/reports/ui-overview-desktop.png)
 
+## Le premier draft : comprendre le besoin avec Pandas
+
+Le projet n'a pas commence directement avec Airflow, Spark et plusieurs
+services Docker. Le premier travail a ete realise dans le notebook
+[pandas_only_draft.executed.ipynb](notebooks/pandas_only_draft.executed.ipynb).
+Cette version est conservee dans le depot pour montrer le raisonnement avant
+l'industrialisation, avec ses cellules executees et ses premiers resultats.
+
+Pandas et Jupyter ont permis d'avancer rapidement sur les questions de base :
+
+- comprendre les colonnes renvoyees par l'API Chicago ;
+- filtrer une periode avec `trip_start_timestamp` ;
+- convertir les dates et les montants ;
+- reperer les valeurs manquantes, negatives ou incoherentes ;
+- tester les premiers KPI et regroupements ;
+- verifier visuellement les pickups, dropoffs et zones sur une carte ;
+- construire une premiere separation Bronze, Silver et Gold.
+
+Ce draft est utile parce qu'il rend l'exploration visible. Une cellule peut etre
+modifiee et rejouee immediatement, les DataFrames sont faciles a inspecter et
+les regles metier peuvent etre discutees avant de construire l'infrastructure.
+Il a servi de specification fonctionnelle pour la suite du projet.
+
+Le notebook montre aussi les limites de cette premiere approche. Toutes les
+donnees vivent dans la memoire d'un seul processus, l'ordre d'execution des
+cellules peut changer le resultat, et une erreur au milieu demande souvent une
+relance manuelle. Il ne fournit pas a lui seul un ordonnanceur, une publication
+atomique, un historique de runs, un stockage partage ou une API stable pour le
+dashboard.
+
+L'industrialisation a donc ete progressive :
+
+```text
+Notebook Pandas
+  -> validation du besoin et des regles metier
+  -> jobs PySpark separes Bronze / Silver / Gold
+  -> quality gates et quarantaine
+  -> snapshots versionnes dans S3
+  -> orchestration Airflow
+  -> API FastAPI et dashboard web
+  -> future plateforme MLOps de prediction tarifaire
+```
+
+Le notebook reste un premier draft pedagogique. Le code sous `src/` est la
+reference executable actuelle. La sortie HTML de la carte a ete conservee dans
+le notebook, mais la cle CARTO a ete remplacee par `REDACTED` avant la
+publication publique.
+
 ## Le point important sur les dates
 
 Le pipeline travaille par journee. Le parametre `processing_date=2023-06-01`
@@ -323,6 +371,7 @@ config/                 configuration et seuils
 dags/                   DAG Airflow
 docker/                 images Airflow et API
 frontend/               HTML, CSS et JavaScript
+notebooks/              premier draft Pandas execute
 scripts/                lancement, validation et tests de release
 src/bronze/             ingestion SODA
 src/silver/             typage, controles et quarantaine
