@@ -17,6 +17,8 @@ les snapshots Gold et leurs rapports de provenance depuis S3.
 SeaweedFS 4.46 fournit le mode mono-conteneur mini. Le choix evite d'ajouter un
 cluster de stockage ou de compiler MinIO pour ce test. Les interfaces S3 restent
 standard : boto3 peut pointer vers un autre serveur compatible.
+Le Compose autorise 64 volumes locaux de 128 Mo afin de conserver un backfill
+de plusieurs semaines avec ses snapshots versionnés.
 References : [version officielle](https://github.com/seaweedfs/seaweedfs/releases/tag/4.46)
 et [mode mini](https://github.com/seaweedfs/seaweedfs/wiki/Quick-Start-with-weed-mini).
 
@@ -62,6 +64,10 @@ Pour plusieurs jours, declencher `chicago_taxi_range_pipeline` avec
 bornes incluses. Les DAGs n'ont pas de planification automatique : un lot ne
 demarre pas sans declenchement.
 
+Après le Quality Gate Silver, le run apparaît dans **Required Actions**. Un
+clic sur **Approve** autorise Gold; **Reject** arrête cette partition. Chaque
+date d'une plage Airflow demande une décision.
+
 Jobs manuels dans l'environnement provisionne, sans orchestration :
 
 ```powershell
@@ -75,6 +81,9 @@ docker compose exec airflow python -m scripts.run_stage --layer gold --processin
 Ne pas lancer les commandes manuelles pendant un DAG sur la meme date.
 Un run_stage inclut son controle DataOps et sa publication S3. L'appel direct
 a src.gold ou src.silver reste un outil local qui ne publie pas dans S3.
+
+Le runner de plage réutilise une session Spark par couche. Il est adapté aux
+backfills automatisés et ne demande pas d'approbation humaine Airflow.
 
 ## Persistance et arret
 

@@ -41,12 +41,13 @@ def fetch_page(source, ingestion, where, offset):
                 if not isinstance(records, list) or any(not isinstance(row, dict) for row in records):
                     raise ValueError("SODA response must be a list of records")
                 return records
-        except (requests.Timeout, requests.HTTPError) as exc:
+        except (requests.Timeout, requests.ConnectionError, requests.HTTPError) as exc:
             status = exc.response.status_code if exc.response is not None else None
-            retryable = isinstance(exc, requests.Timeout) or status in {429, 500, 502, 503, 504}
+            retryable = isinstance(exc, (requests.Timeout, requests.ConnectionError)) or status in {
+                429, 500, 502, 503, 504}
             if not retryable or attempt == attempts - 1:
                 raise
-            time.sleep(ingestion.get("retry_backoff_seconds", 2))
+            time.sleep(ingestion.get("retry_backoff_seconds", 2) * (2 ** attempt))
 
 
 def fetch_all_pages(source, ingestion, processing_date, logger):

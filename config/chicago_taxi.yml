@@ -17,7 +17,7 @@ bronze:
     page_size: 50000
     max_pages: 2
     timeout_seconds: 120
-    max_retries: 3
+    max_retries: 5
     retry_backoff_seconds: 2
     expected_columns:
       - trip_id

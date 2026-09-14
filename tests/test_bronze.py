@@ -54,6 +54,19 @@ def test_retry_is_limited(monkeypatch, status, expected_attempts):
     assert len(calls) == expected_attempts
 
 
+def test_connection_errors_are_retried(monkeypatch):
+    calls = []
+    def fail(*args, **kwargs):
+        calls.append(1)
+        raise requests.ConnectionError("temporary DNS failure")
+    monkeypatch.setattr(bronze.requests, "get", fail)
+    monkeypatch.setattr(bronze.time, "sleep", lambda seconds: None)
+    with pytest.raises(requests.ConnectionError):
+        bronze.fetch_page({"domain": "example.test", "dataset_id": "fixture"},
+                          {"max_retries": 3}, "test", 0)
+    assert len(calls) == 3
+
+
 def test_bronze_quality(spark):
     records = [{"trip_id": "same", "fare": "0"}, {"trip_id": "same", "fare": "0"}, {"trip_id": None, "fare": None}]
     columns = load_config("config/chicago_taxi.yml")["bronze"]["ingestion"]["expected_columns"]

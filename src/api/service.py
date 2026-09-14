@@ -30,14 +30,22 @@ def publications():
     return result
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=4)
 def read_snapshot(signature):
     frames = [pd.read_parquet(Path(path).parent / "trips") for path, run_id in signature]
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
 def trips(filters):
-    signature = tuple((str(path), manifest["run_id"]) for path, manifest in publications())
+    published = publications()
+    start, end = filters.get("start_date"), filters.get("end_date")
+    if not start and not end and published:
+        published = published[-1:]
+    else:
+        published = [(path, manifest) for path, manifest in published
+                     if (not start or pd.Timestamp(manifest["processing_date"]).date() >= start)
+                     and (not end or pd.Timestamp(manifest["processing_date"]).date() <= end)]
+    signature = tuple((str(path), manifest["run_id"]) for path, manifest in published)
     if not signature:
         raise FileNotFoundError("No validated Gold publication. Run Bronze, Silver and Gold first.")
     df = read_snapshot(signature)

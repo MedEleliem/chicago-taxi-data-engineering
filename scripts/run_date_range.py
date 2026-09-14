@@ -1,9 +1,9 @@
-"""Run the daily pipeline sequentially for an inclusive date range."""
+"""Run daily partitions for an inclusive date range with one Spark session per layer."""
 import argparse
-import subprocess
-import sys
 
+from src.common import create_spark, load_config
 from src.date_range import processing_dates
+from scripts.run_stage import run_stage
 
 
 def main():
@@ -12,13 +12,16 @@ def main():
     parser.add_argument("--end-date", required=True)
     parser.add_argument("--config", default="config/chicago_taxi.yml")
     args = parser.parse_args()
-    for day in processing_dates(args.start_date, args.end_date):
-        command = [sys.executable, "-m", "scripts.run_pipeline", "--processing-date", day,
-                   "--config", args.config]
-        print(f"Running partition {day}", flush=True)
-        result = subprocess.run(command)
-        if result.returncode:
-            raise SystemExit(result.returncode)
+    dates = processing_dates(args.start_date, args.end_date)
+    config = load_config(args.config)
+    for layer in ("bronze", "silver", "gold"):
+        spark = create_spark(f"chicago-range-{layer}")
+        try:
+            for index, day in enumerate(dates, start=1):
+                print(f"[{layer}] partition {index}/{len(dates)}: {day}", flush=True)
+                run_stage(layer, day, config, spark)
+        finally:
+            spark.stop()
 
 
 if __name__ == "__main__":

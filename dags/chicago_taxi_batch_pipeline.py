@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from airflow.sdk import DAG, Param, task
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.hitl import ApprovalOperator
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
 from src.date_range import processing_dates
@@ -45,6 +46,22 @@ with DAG(
         )
         previous >> stage_task
         previous = stage_task
+        if task_id == "quality_gate":
+            human_approval = ApprovalOperator(
+                task_id="approve_data_and_business_quality",
+                subject="Approve data and business quality - {{ params.processing_date }}",
+                body=(
+                    "Automated Bronze and Silver checks passed. Review the validate_bronze "
+                    "and quality_gate task outputs, including row reconciliation, rejection "
+                    "rate and business consistency. Approve to build and publish Gold; "
+                    "Reject stops downstream tasks."
+                ),
+                fail_on_reject=False,
+                response_timeout=timedelta(days=7),
+                execution_timeout=timedelta(days=7),
+            )
+            previous >> human_approval
+            previous = human_approval
     end = EmptyOperator(task_id="end")
     previous >> end
 

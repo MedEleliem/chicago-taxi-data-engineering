@@ -39,6 +39,16 @@ Les avertissements metier Silver ne sont pas des rejets et ne bloquent pas
 le gate. `allow_empty=false` bloque un lot vide. `require_complete_bronze=true`
 bloque une extraction tronquee par max_pages, meme si Bronze a termine.
 
+## Validation humaine
+
+Les contrôles automatiques vérifient ce qui peut être exprimé de manière
+déterministe. Le DAG ajoute ensuite
+`approve_data_and_business_quality`, basé sur l'`ApprovalOperator` natif
+d'Airflow. Le reviewer confirme la réconciliation, le taux de rejet et la
+cohérence métier avant la construction de Gold. **Approve** continue le DAG;
+**Reject** arrête les tâches suivantes. Cette décision ne remplace jamais un
+Quality Gate automatique en échec.
+
 ## Audit et limites
 
 `data/reports/audit/<run_id>.json` contient run_id, processing_date, layer,
