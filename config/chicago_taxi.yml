@@ -1,0 +1,64 @@
+dataset: chicago_taxi
+
+dataops:
+  warning_threshold: 0.02
+  failure_threshold: 0.05
+  allow_empty: false
+  require_complete_bronze: true
+
+bronze:
+  source:
+    domain: data.cityofchicago.org
+    dataset_id: wrvz-psew
+    app_token_env: CHICAGO_APP_TOKEN
+  ingestion:
+    timestamp_column: trip_start_timestamp
+    order_by: trip_start_timestamp, trip_id
+    page_size: 50000
+    max_pages: 2
+    timeout_seconds: 120
+    max_retries: 3
+    retry_backoff_seconds: 2
+    expected_columns:
+      - trip_id
+      - taxi_id
+      - trip_start_timestamp
+      - trip_end_timestamp
+      - trip_seconds
+      - trip_miles
+      - pickup_census_tract
+      - dropoff_census_tract
+      - pickup_community_area
+      - dropoff_community_area
+      - fare
+      - tips
+      - tolls
+      - extras
+      - trip_total
+      - payment_type
+      - company
+      - pickup_centroid_latitude
+      - pickup_centroid_longitude
+      - pickup_centroid_location
+      - dropoff_centroid_latitude
+      - dropoff_centroid_longitude
+      - dropoff_centroid_location
+  output:
+    path: data/bronze/chicago_taxi
+    reports_path: data/reports
+    logs_path: data/logs
+    format: parquet
+
+silver:
+  input_path: data/bronze/chicago_taxi
+  output_path: data/silver/chicago_taxi
+  quarantine_path: data/quarantine/chicago_taxi
+  reports_path: data/reports
+  logs_path: data/logs
+  format: parquet
+
+gold:
+  input_path: data/silver/chicago_taxi
+  output_path: data/gold/chicago_taxi
+  reports_path: data/reports
+  logs_path: data/logs

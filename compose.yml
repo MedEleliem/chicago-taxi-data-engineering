@@ -1,0 +1,113 @@
+name: chicago-taxi
+
+x-storage: &storage
+  S3_ENDPOINT_URL: http://object-store:8333
+  S3_BUCKET: chicago-taxi
+  AWS_ACCESS_KEY_ID: ${CHICAGO_S3_USER:-chicago-local}
+  AWS_SECRET_ACCESS_KEY: ${CHICAGO_S3_PASSWORD:-chicago-local-storage-only}
+  AWS_DEFAULT_REGION: us-east-1
+
+services:
+  object-store:
+    image: chrislusf/seaweedfs:4.46
+    command: ["mini", "-dir=/data", "-master.volumeSizeLimitMB=128", "-volume.max=8"]
+    environment: *storage
+    volumes:
+      - object-data:/data
+    ports:
+      - "127.0.0.1:${CHICAGO_S3_PORT:-18333}:8333"
+      - "127.0.0.1:${CHICAGO_STORAGE_UI_PORT:-18888}:8888"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9333/cluster/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    mem_limit: 512m
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: ${CHICAGO_POSTGRES_PASSWORD:-chicago-local-db-only}
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      retries: 20
+    mem_limit: 256m
+
+  airflow:
+    build:
+      context: .
+      dockerfile: docker/airflow.Dockerfile
+    environment:
+      <<: *storage
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${CHICAGO_POSTGRES_PASSWORD:-chicago-local-db-only}@postgres/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/chicago/dags
+      AIRFLOW__CORE__PARALLELISM: "1"
+      AIRFLOW__CORE__AUTH_MANAGER: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: artefact:admin
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/simple_auth_manager_passwords.json
+      AIRFLOW__API__WORKERS: "1"
+      AIRFLOW__API_AUTH__JWT_SECRET: ${CHICAGO_JWT_SECRET:-chicago-local-jwt-change-before-sharing}
+      AIRFLOW__DAG_PROCESSOR__PARSING_PROCESSES: "1"
+      CHICAGO_AIRFLOW_PASSWORD: ${CHICAGO_AIRFLOW_PASSWORD:-chicago-local}
+      CHICAGO_PROJECT_ROOT: /opt/chicago
+      CHICAGO_CONFIG: config/chicago_taxi.yml
+      SPARK_MASTER: local[1]
+      SPARK_LOCAL_IP: 127.0.0.1
+      PYTHONPATH: /opt/chicago
+    command: ["python", "/opt/chicago/scripts/start_airflow.py"]
+    ports:
+      - "127.0.0.1:${CHICAGO_AIRFLOW_PORT:-18080}:8080"
+    volumes:
+      - airflow-home:/opt/airflow
+      - ./data/docker:/opt/chicago/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      object-store:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v2/monitor/health', timeout=5)"]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    mem_limit: 3g
+    cpus: 2
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      <<: *storage
+      CHICAGO_DATA_ROOT: /opt/chicago/data
+    ports:
+      - "127.0.0.1:${CHICAGO_API_PORT:-18000}:8000"
+    volumes:
+      - api-cache:/opt/chicago/data
+    depends_on:
+      object-store:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=10)"]
+      interval: 20s
+      timeout: 15s
+      retries: 10
+    mem_limit: 768m
+
+volumes:
+  object-data:
+  postgres-data:
+  airflow-home:
+  api-cache:

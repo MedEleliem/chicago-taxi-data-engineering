@@ -1,0 +1,7 @@
+fastapi==0.139.0
+uvicorn==0.50.2
+pandas==3.0.3
+pyarrow==24.0.0
+requests==2.34.2
+httpx==0.28.1
+boto3==1.43.93

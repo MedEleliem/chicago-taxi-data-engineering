@@ -1,0 +1,115 @@
+{
+  "started_at": "2026-09-14T03:45:55.862018+00:00",
+  "processing_date": "2023-06-01",
+  "runs": [
+    {
+      "dag_run_id": "acceptance_728ef733acb04ddf9681e500de382407",
+      "state": "success",
+      "kpis": {
+        "total_trips": 23882,
+        "total_revenue": 691745.98,
+        "avg_trip_total": 29.0076730826,
+        "avg_trip_miles": 6.8453479608,
+        "avg_trip_duration_minutes": 24.666443309,
+        "total_tips": 82825.5,
+        "tipped_trip_rate": 0.5882254418,
+        "unique_taxis": 2339,
+        "unique_companies": 31
+      },
+      "quality": {
+        "bronze_rows": 24337,
+        "input_rows": 24337,
+        "valid_rows": 23882,
+        "rejected_rows": 455,
+        "warning_rows": 21700,
+        "rejection_rate": 0.018695812959691006,
+        "warning_rate": 0.8916464642314171,
+        "runs": [
+          {
+            "processing_date": "2023-06-01",
+            "bronze_run_id": "BRZ_20260914T034631Z_7bb4514c",
+            "silver_run_id": "SLV_20260914T035056Z_13fa61d1",
+            "gold_run_id": "GLD_20260914T035316Z_1fefa4d5",
+            "status": "SUCCESS",
+            "bronze_rows": 24337,
+            "input_rows": 24337,
+            "valid_rows": 23882,
+            "rejected_rows": 455,
+            "warning_rows": 21700,
+            "pagination_complete": true
+          }
+        ]
+      },
+      "snapshot": {
+        "gold_run_id": "GLD_20260914T035316Z_1fefa4d5",
+        "trip_rows": 23882,
+        "unique_trip_ids": 23882,
+        "content_sha256": "65e10d5d4245920656f626621f17740ea09a1e7d361cabc9d2ed399308e8b4cf",
+        "verified_object_files": 50
+      }
+    },
+    {
+      "dag_run_id": "acceptance_51c440bf5581468db449f7af34d9275d",
+      "state": "success",
+      "kpis": {
+        "total_trips": 23882,
+        "total_revenue": 691745.98,
+        "avg_trip_total": 29.0076730826,
+        "avg_trip_miles": 6.8453479608,
+        "avg_trip_duration_minutes": 24.666443309,
+        "total_tips": 82825.5,
+        "tipped_trip_rate": 0.5882254418,
+        "unique_taxis": 2339,
+        "unique_companies": 31
+      },
+      "quality": {
+        "bronze_rows": 24337,
+        "input_rows": 24337,
+        "valid_rows": 23882,
+        "rejected_rows": 455,
+        "warning_rows": 21700,
+        "rejection_rate": 0.018695812959691006,
+        "warning_rate": 0.8916464642314171,
+        "runs": [
+          {
+            "processing_date": "2023-06-01",
+            "bronze_run_id": "BRZ_20260914T035538Z_d14806f4",
+            "silver_run_id": "SLV_20260914T035746Z_f406d8fc",
+            "gold_run_id": "GLD_20260914T035945Z_2bca7b98",
+            "status": "SUCCESS",
+            "bronze_rows": 24337,
+            "input_rows": 24337,
+            "valid_rows": 23882,
+            "rejected_rows": 455,
+            "warning_rows": 21700,
+            "pagination_complete": true
+          }
+        ]
+      },
+      "snapshot": {
+        "gold_run_id": "GLD_20260914T035945Z_2bca7b98",
+        "trip_rows": 23882,
+        "unique_trip_ids": 23882,
+        "content_sha256": "65e10d5d4245920656f626621f17740ea09a1e7d361cabc9d2ed399308e8b4cf",
+        "verified_object_files": 50
+      }
+    }
+  ],
+  "checks": {
+    "unique_gold_trip_ids": true,
+    "reconciliation": true,
+    "gold_matches_silver": true,
+    "complete_source": true,
+    "rerun_kpis_identical": true,
+    "rerun_content_identical": true,
+    "rerun_new_run_id": true,
+    "/api/health": true,
+    "/": true,
+    "/api/daily": true,
+    "/api/hourly": true,
+    "/api/geo/trips": true,
+    "/api/data-quality/errors": true
+  },
+  "status": "PASS",
+  "finished_at": "2026-09-14T04:01:06.671691+00:00"
+}

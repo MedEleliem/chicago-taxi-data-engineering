@@ -1,0 +1,1 @@
+"""Local Gold serving API."""

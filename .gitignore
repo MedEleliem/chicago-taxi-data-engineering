@@ -1,0 +1,14 @@
+.ipynb_checkpoints/
+.pytest_cache/
+.test-tmp/
+.jupyter_config/
+.jupyter_data/
+.jupyter_runtime/
+data/
+tests/output/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env*
+!.env.example

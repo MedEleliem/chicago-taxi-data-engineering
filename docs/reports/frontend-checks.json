@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "overview": true,
+    "charts": true,
+    "filters": true,
+    "operations": true,
+    "pagination": true,
+    "map_features": true,
+    "trip_detail": true,
+    "map_tiles": true,
+    "area_mode": true,
+    "optional_places": true,
+    "quality": true,
+    "quality_filter_scope": true,
+    "no_overflow_overview_390": true,
+    "no_overflow_geography_390": true,
+    "no_overflow_quality_390": true,
+    "no_overflow_overview_768": true,
+    "no_overflow_geography_768": true,
+    "no_overflow_quality_768": true,
+    "no_js_errors": true
+  },
+  "errors": []
+}

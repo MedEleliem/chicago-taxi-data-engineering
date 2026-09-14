@@ -1,0 +1,6 @@
+pyspark==4.2.0
+PyYAML==6.0.3
+pytest==9.1.1
+pyarrow==24.0.0
+requests==2.34.2
+boto3==1.43.93

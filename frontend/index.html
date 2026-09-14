@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chicago Taxi Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script defer src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+  <script defer src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
+  <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script defer src="/static/js/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<aside class="sidebar">
+  <a class="brand" href="#overview"><span class="brand-mark"><i data-lucide="route"></i></span><span>CHICAGO TAXI<span class="brand-sub">INTELLIGENCE</span></span></a>
+  <div class="workspace"><span class="workspace-mark">CT</span><div>Mobility workspace<small>Chicago, Illinois</small></div><i data-lucide="chevrons-up-down"></i></div>
+  <div class="nav-label">ANALYTICS</div>
+  <nav aria-label="Main navigation">
+    <a href="#overview" data-page="overview"><i data-lucide="layout-dashboard"></i>Overview</a>
+    <a href="#operations" data-page="operations"><i data-lucide="chart-no-axes-combined"></i>Operations</a>
+    <a href="#geography" data-page="geography"><i data-lucide="map"></i>Geography</a>
+    <a href="#quality" data-page="quality"><i data-lucide="shield-check"></i>Data Quality</a>
+  </nav>
+  <div class="sidebar-bottom"><div class="source-label"><span class="status-dot"></span>Local data platform</div><small>Chicago SODA · Parquet</small><a href="/docs" target="_blank" rel="noreferrer">API documentation<i data-lucide="arrow-up-right"></i></a></div>
+</aside>
+<main id="content">
+  <div class="topbar"><div class="breadcrumb">Workspace <span>/</span> Analytics <span>/</span> <strong id="crumb">Overview</strong></div><div class="connection" id="connection">Connecting</div></div>
+  <header class="page-header"><div><div class="eyebrow">MOBILITY INTELLIGENCE</div><h1 id="page-title">Chicago Taxi Intelligence</h1><p id="page-subtitle">Operational &amp; Revenue Analytics</p></div><button class="icon-button" id="refresh" aria-label="Refresh data" title="Refresh data"><i data-lucide="refresh-cw"></i></button></header>
+  <div id="demo-banner" class="demo-banner" hidden><i data-lucide="flask-conical"></i>Synthetic demonstration data · June 1–7, 2023</div>
+  <form id="filters" class="filters">
+    <label>From<input type="date" id="start-date" name="start_date" required></label>
+    <label>To<input type="date" id="end-date" name="end_date" required></label>
+    <label>Company<select id="company"><option value="">All companies</option></select></label>
+    <label>Payment<select id="payment"><option value="">All payments</option></select></label>
+    <button class="primary-button" type="submit"><i data-lucide="list-filter"></i>Apply filters</button>
+    <button type="button" class="icon-button" id="reset" aria-label="Reset filters" title="Reset filters"><i data-lucide="rotate-ccw"></i></button>
+  </form>
+  <div id="feedback" class="feedback" role="status" hidden></div>
+  <div id="loading" class="loading-line" hidden><span></span></div>
+  <section id="overview" class="page" aria-label="Overview">
+    <div class="section-heading"><h2>Performance at a glance</h2><span class="period-label"></span></div>
+    <div id="overview-kpis" class="kpi-grid"></div>
+    <div class="chart-grid overview-grid"><section class="chart-section"><div class="section-heading"><h2>Daily trips</h2><span>Trip volume</span></div><div id="daily-trips" class="chart"></div></section><section class="chart-section"><div class="section-heading"><h2>Daily revenue</h2><span>USD</span></div><div id="daily-revenue" class="chart"></div></section></div>
+    <section class="chart-section"><div class="section-heading"><h2>Trips by hour</h2><span>Published trip start time</span></div><div id="overview-hourly" class="chart short-chart"></div></section>
+  </section>
+  <section id="operations" class="page" aria-label="Operations" hidden>
+    <div class="section-heading"><h2>Operating performance</h2><span class="period-label"></span></div>
+    <div id="operations-kpis" class="kpi-grid compact-kpis"></div>
+    <div class="chart-grid"><section class="chart-section"><h2>Activity by day &amp; hour</h2><div id="activity-heatmap" class="chart"></div></section><section class="chart-section"><h2>Revenue by company</h2><div id="company-revenue" class="chart"></div></section><section class="chart-section"><h2>Company ranking</h2><div id="company-ranking" class="chart short-chart"></div></section><section class="chart-section"><h2>Payment mix</h2><div id="payment-mix" class="chart short-chart"></div></section></div>
+    <section class="trips-section"><div class="section-heading"><h2>Trip records</h2><label class="search"><i data-lucide="search"></i><input id="trip-search" type="search" placeholder="Search trip ID or company" aria-label="Search trips"></label></div><div class="table-scroll"><table><thead><tr><th>Trip ID</th><th><button class="sort" data-sort="trip_start_timestamp">Start <i data-lucide="arrow-down-up"></i></button></th><th><button class="sort" data-sort="company">Company <i data-lucide="arrow-down-up"></i></button></th><th>Payment</th><th>Distance</th><th><button class="sort" data-sort="trip_total">Total <i data-lucide="arrow-down-up"></i></button></th></tr></thead><tbody id="trip-rows"></tbody></table></div><div class="pagination"><span id="trip-count"></span><div><button class="icon-button" id="prev" aria-label="Previous page" title="Previous page"><i data-lucide="chevron-left"></i></button><button class="icon-button" id="next" aria-label="Next page" title="Next page"><i data-lucide="chevron-right"></i></button></div></div></section>
+  </section>
+  <section id="geography" class="page" aria-label="Geography" hidden>
+    <div class="map-toolbar"><div class="segmented" role="group" aria-label="Map mode"><button data-mode="density" aria-pressed="true">Pickup Density</button><button data-mode="trips-area" aria-pressed="false">Trips by Area</button><button data-mode="revenue-area" aria-pressed="false">Revenue by Area</button><button data-mode="explorer" aria-pressed="false">Trip Explorer</button></div><span id="map-count"></span></div>
+    <div class="map-layout"><div class="map-wrap"><div id="map" aria-label="Chicago taxi map"></div><div class="map-legend"><span class="legend-dot"></span><span id="map-legend-text">Pickup concentration</span></div><button id="fit-map" class="icon-button map-fit" title="Fit all locations" aria-label="Fit all locations"><i data-lucide="scan"></i></button><div id="map-error" class="map-error" hidden></div></div><aside class="trip-detail" id="trip-detail"><span class="eyebrow">TRIP EXPLORER</span><h2>Trip details</h2><div class="detail-empty"><i data-lucide="mouse-pointer-2"></i><p>No trip selected</p></div></aside></div>
+    <p class="map-note">Straight line between published pickup/dropoff centroids. Not the actual driven route.</p>
+  </section>
+  <section id="quality" class="page" aria-label="Data Quality" hidden>
+    <div class="section-heading"><h2>Pipeline quality</h2><span>All companies · Selected dates</span></div><div id="quality-kpis" class="kpi-grid"></div>
+    <section class="funnel-section"><h2>From source to trusted data</h2><div id="quality-funnel" class="funnel"></div></section>
+    <div class="chart-grid"><section class="chart-section"><h2>Top blocking rules</h2><div id="error-chart" class="chart"></div></section><section class="chart-section"><h2>Warning rules</h2><div id="warning-chart" class="chart"></div></section></div>
+    <section class="trips-section"><div class="section-heading"><h2>Run lineage</h2><span>Published Gold runs</span></div><div class="table-scroll"><table><thead><tr><th>Processing date</th><th>Bronze run</th><th>Silver run</th><th>Gold run</th><th>Status</th><th>Source complete</th></tr></thead><tbody id="run-rows"></tbody></table></div></section>
+  </section>
+  <footer class="page-footer"><span>Chicago Taxi Intelligence</span><span id="updated">Local analytics workspace</span></footer>
+</main>
+</body>
+</html>
