@@ -1,8 +1,8 @@
 # Chicago Taxi Trips - Data Engineering Project
 
-Ce projet part du notebook Pandas fourni pour le test technique. Mon objectif
-etait de garder la logique facile a lire, puis de la transformer en une vraie
-chaine data que je peux relancer, controler et servir dans une application web.
+Ce projet part du notebook Pandas fourni pour le test technique. L'objectif est
+de garder une logique facile a lire, puis de la transformer en une chaine data
+qui peut etre relancee, controlee et exploitee dans une application web.
 
 La version finale utilise PySpark pour les traitements, Airflow pour
 l'orchestration, un stockage compatible S3 pour les donnees, FastAPI pour l'API
@@ -21,8 +21,8 @@ trip_start_timestamp <  2023-06-02T00:00:00
 ```
 
 La borne de debut est incluse et celle du lendemain est exclue. Cela evite de
-lire deux fois un trajet situe exactement a minuit quand je traite plusieurs
-jours.
+lire deux fois un trajet situe exactement a minuit lorsque plusieurs jours sont
+traites.
 
 L'API SODA est lue par pages de 50 000 lignes, avec deux pages maximum dans la
 configuration actuelle. Le lot peut donc contenir jusqu'a 100 000 lignes. Le
@@ -55,10 +55,10 @@ flowchart LR
 ### Bronze
 
 Bronze telecharge la journee demandee depuis le dataset Chicago Taxi Trips
-`wrvz-psew`. Je conserve la reponse JSON brute et un Parquet avec toutes les
-colonnes en texte. A ce niveau, je ne corrige pas les valeurs : je garde ce que
-la source m'a donne et j'enregistre le nombre de pages, de lignes et le statut
-de la pagination.
+`wrvz-psew`. La reponse JSON brute est conservee avec un Parquet contenant
+toutes les colonnes en texte. A ce niveau, les valeurs ne sont pas corrigees :
+la couche garde ce que la source a fourni et enregistre le nombre de pages, de
+lignes et le statut de la pagination.
 
 ### Silver
 
@@ -68,8 +68,8 @@ un identifiant absent, une duree negative ou un montant incoherent. Les champs
 moins critiques, comme une coordonnee manquante, restent dans Silver avec un
 warning.
 
-Je garde une seule ligne valide par `trip_id`. En cas de doublon, le choix est
-deterministe : une ligne sans erreur passe en premier, puis les valeurs sont
+Silver garde une seule ligne valide par `trip_id`. En cas de doublon, le choix
+est deterministe : une ligne sans erreur passe en premier, puis les valeurs sont
 comparees dans un ordre stable. Les autres occurrences vont en quarantaine avec
 `DUPLICATE_TRIP_ID_EXCLUDED`.
 
@@ -145,9 +145,9 @@ docker compose exec airflow airflow dags trigger chicago_taxi_batch_pipeline
 docker compose logs -f airflow
 ```
 
-Pour une autre date, je peux utiliser le formulaire **Trigger DAG** dans
-Airflow et remplir `processing_date`. Je peux aussi executer la chaine sans le
-DAG :
+Pour une autre date, l'utilisateur peut ouvrir le formulaire **Trigger DAG**
+dans Airflow et remplir `processing_date`. La chaine peut aussi etre executee
+sans le DAG :
 
 ```powershell
 docker compose exec airflow python -m scripts.run_pipeline --processing-date 2023-06-02
@@ -161,8 +161,8 @@ docker compose exec airflow python -m scripts.run_stage --layer silver --process
 docker compose exec airflow python -m scripts.run_stage --layer gold --processing-date 2023-06-02
 ```
 
-Je ne lance pas deux traitements en meme temps sur la meme date, car ils
-partagent encore un espace de travail local.
+Deux traitements ne doivent pas etre lances en meme temps sur la meme date, car
+ils partagent encore un espace de travail local.
 
 Pour arreter les services sans supprimer les donnees :
 
@@ -170,8 +170,8 @@ Pour arreter les services sans supprimer les donnees :
 docker compose stop
 ```
 
-`docker compose down -v` supprime les volumes. Je ne l'utilise donc pas si je
-veux garder les snapshots et l'historique Airflow.
+`docker compose down -v` supprime les volumes. Cette commande est donc a eviter
+si les snapshots et l'historique Airflow doivent etre conserves.
 
 ## Ce que montre le dashboard
 
@@ -190,6 +190,100 @@ lieux proches d'un point selectionne.
 La cle CARTO est lue depuis `.env.local`, qui est ignore par Git et exclu des
 images Docker. `.env.example` montre seulement les noms des variables attendues.
 
+## Pourquoi le dashboard actuel reste une demonstration
+
+Le dashboard Compose utilise de vraies donnees historiques de Chicago. Les
+chiffres du `2023-06-01` ne sont donc pas generes artificiellement. Le projet
+reste cependant une demonstration pour trois raisons :
+
+- l'acquisition est declenchee manuellement, journee par journee ;
+- la source SODA ne pousse pas les nouvelles courses sous forme d'evenements ;
+- le dashboard lit la derniere publication Gold validee, pas un flux continu.
+
+Une date affichee represente ainsi un snapshot controle et reproductible. Elle
+ne correspond pas a l'etat des taxis a la seconde presente. Un mode synthetique
+separe existe avec `python -m scripts.build_demo` pour tester l'interface sans
+appeler Chicago, mais il n'est pas utilise dans les resultats d'acceptation.
+
+Cette V1 sert d'abord a fiabiliser le socle : ingestion, qualite, lineage,
+idempotence, stockage et exposition API. Une prediction temps reel n'est utile
+que si les donnees qui alimentent le modele sont elles-memes fiables.
+
+## Exploitation cible du dashboard en temps reel
+
+L'ambition est de faire evoluer cette interface d'un outil d'analyse historique
+vers un produit utilisable avant, pendant et apres une course.
+
+Pour un passager, une future vue **Fare Estimate** permettrait de renseigner un
+point de depart, une destination et une heure souhaitee. L'application
+calculerait les zones, une distance et une duree estimees, puis appellerait une
+API de prediction pour afficher un prix attendu et un intervalle de confiance.
+
+Pour une equipe operationnelle, le dashboard pourrait suivre :
+
+- le volume de demandes, les pickups et le revenu presque en temps reel ;
+- les zones ou la demande augmente ;
+- le prix predit compare au prix observe a la fin de la course ;
+- les erreurs du modele par zone, heure et compagnie ;
+- la derive des variables et la version du modele actuellement servie.
+
+Le flux cible serait le suivant :
+
+```mermaid
+flowchart LR
+    A[Course demandee] --> B[Features temps reel]
+    B --> C[API de prediction]
+    C --> D[Prix estime + intervalle]
+    D --> E[Dashboard utilisateur]
+    F[Course terminee] --> G[Prix reel]
+    G --> H[Monitoring et derive]
+    H --> I[Donnees de reentrainement]
+```
+
+Le dashboard ne doit pas lancer un reentrainement a chaque requete. Il appelle
+uniquement un service de prediction leger. L'entrainement, les controles et la
+mise en production restent dans une plateforme separee.
+
+## Ambition MLOps : predire le prix d'une course
+
+La prochaine grande etape est un modele de regression capable d'estimer le
+`fare` avant le depart. Le prix total avec pourboire ne serait pas une bonne
+cible avant la course, car le pourboire n'est connu qu'apres le paiement.
+
+Les premieres variables candidates sont la zone de depart, la zone d'arrivee,
+l'heure, le jour de la semaine, la distance et la duree estimees. Des donnees de
+trafic, meteo, evenements ou niveau de demande pourraient ensuite completer ces
+features si leur disponibilite temps reel est garantie. Les variables connues
+seulement apres la course doivent etre exclues pour eviter la fuite de cible.
+
+L'architecture MLOps vise le meme principe que le projet public
+[FraudOps MLOps Demo](https://github.com/MedEleliem/fraudops-mlops-demo) :
+
+```text
+Pipeline training / admin
+  -> construction du dataset et des features
+  -> entrainement et evaluation de plusieurs candidats
+  -> suivi des experiences avec MLflow
+  -> versionnement des donnees et artefacts avec DVC
+  -> comparaison avec le modele de production
+  -> validation puis promotion dans le registry
+
+Service de prediction
+  -> charge uniquement le modele approuve
+  -> expose /predict, /health et /model-info
+  -> repond rapidement sans Spark, DVC ou MLflow
+  -> journalise prediction, latence et version du modele
+```
+
+Chaque modele devra avoir une version immuable, ses parametres, ses metriques,
+son schema d'entree et la periode de donnees utilisee. Une CI pourra bloquer la
+promotion si les erreurs globales ou les erreurs par zone regressent. Une image
+Docker de serving sera ensuite associee a la version approuvee.
+
+Cette partie est une roadmap. La V1 actuelle fournit les donnees Gold, l'API et
+les controles necessaires pour la preparer, mais elle n'entraine et ne sert
+encore aucun modele de prediction de prix.
+
 ## Tests et resultats obtenus
 
 La suite complete dans l'image Linux finale donne :
@@ -198,8 +292,8 @@ La suite complete dans l'image Linux finale donne :
 37 passed, 1 skipped
 ```
 
-Le test ignore par defaut est l'integration S3 destructive. Je l'ai lancee
-separement contre le stockage Compose et elle passe. Le controle navigateur
+Le test ignore par defaut est l'integration S3 destructive. Il a ete execute
+separement contre le stockage Compose et il passe. Le controle navigateur
 contient 19 checks : graphiques, filtres, pagination, carte, tuiles CARTO,
 details des trajets, qualite, responsive mobile et absence d'erreur JavaScript.
 
@@ -240,7 +334,7 @@ tests/                  tests unitaires et integration
 docs/                   explications et preuves
 ```
 
-Pour comprendre le code dans l'ordre, je conseille de lire
+Pour comprendre le code dans l'ordre, le parcours conseille est de lire
 [l'architecture](docs/architecture.md), puis [Bronze](docs/bronze.md),
 [Silver](docs/silver.md), [Gold](docs/gold.md), [le stockage](docs/storage.md),
 [Airflow](docs/airflow.md) et enfin [l'API](docs/api.md) avec
@@ -248,9 +342,10 @@ Pour comprendre le code dans l'ordre, je conseille de lire
 
 ## Choix et limites
 
-J'ai choisi des modules Python simples plutot qu'un framework supplementaire.
-Le DAG orchestre des commandes mais ne contient pas les transformations. Cette
-separation permet de tester chaque couche sans demarrer Airflow.
+Le projet utilise des modules Python simples plutot qu'un framework
+supplementaire. Le DAG orchestre des commandes mais ne contient pas les
+transformations. Cette separation permet de tester chaque couche sans demarrer
+Airflow.
 
 Cette version reste adaptee a un test local et a une fenetre journaliere :
 
@@ -261,7 +356,7 @@ Cette version reste adaptee a un test local et a une fenetre journaliere :
 - les assets web et les tuiles cartographiques demandent Internet ;
 - il n'y a pas encore de verrou distribue entre deux pipelines concurrents.
 
-Pour aller plus loin, je passerais a une lecture S3A directe dans Spark, un
-format transactionnel, une extraction SODA en streaming, une politique de
-retention, un moteur SQL analytique et une CI qui reconstruit Compose et rejoue
-les tests automatiquement.
+Pour aller plus loin, les prochaines evolutions data seraient une lecture S3A
+directe dans Spark, un format transactionnel, une extraction SODA en streaming,
+une politique de retention, un moteur SQL analytique et une CI qui reconstruit
+Compose et rejoue les tests automatiquement.
